@@ -40,6 +40,13 @@ async function run() {
             res.send(reviews);
         })
 
+        // to load orders
+        app.get('/orders', async (req, res) => {
+            const query = {};
+            const orders = await ordersCollection.find(query).toArray();
+            res.send(orders);
+        })
+
         // to post order 
         app.post('/orders', async (req, res) => {
             const order = req.body;
