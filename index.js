@@ -17,6 +17,7 @@ async function run() {
         await client.connect();
         const productsCollection = client.db("autoPartsManufacturer").collection("products");
         const reviewsCollection = client.db("autoPartsManufacturer").collection("reviews");
+        const ordersCollection = client.db("autoPartsManufacturer").collection("orders");
 
         // to load product information from db 
         app.get('/products', async (req, res) => {
@@ -37,6 +38,24 @@ async function run() {
             const query = {};
             const reviews = await reviewsCollection.find(query).toArray();
             res.send(reviews);
+        })
+
+        // to post order 
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            const query = { 
+                product: order.orderName, 
+                quantity: order.orderQuantity, 
+                customerName: order.customerName,
+                customerAddress: order.customerAddress,
+                customerPhone: order.customerPhone
+            };
+            const exists = await ordersCollection.findOne(query);
+            if(exists) {
+                return res.send({ success: false, booking: exists });
+            }
+            const result = await ordersCollection.insertOne(order);
+            return res.send({success: true});
         })
     }
     finally { }
