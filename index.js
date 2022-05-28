@@ -45,14 +45,16 @@ async function run() {
 
         // to load orders
         app.get('/orders', async (req, res) => {
-            const query = {};
+            const customer = req.query.customerEmail;
+            const query = { customerEmail: customer };
+            // const authorization = req.headers.authorization;
             const orders = await ordersCollection.find(query).toArray();
             res.send(orders);
         })
 
         // to put users
         app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
+            const email = req.params.customerEmail;
             const user = req.body;
             const filter = { email: email };
             const options = { upsert: true };
@@ -60,8 +62,8 @@ async function run() {
                 $set: user,
             };
             const result = await usersCollection.updateOne(filter, updateDoc, options);
-            
-            res.send(result )
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token })
         })
 
         // to post order 
@@ -76,16 +78,23 @@ async function run() {
             };
             const exists = await ordersCollection.findOne(query);
             if (exists) {
-                return res.send({ success: false, booking: exists });
+                return res.send({ success: false});
             }
             const result = await ordersCollection.insertOne(order);
+            return res.send({ success: true });
+        })
+        
+        // to post review 
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewsCollection.insertOne(review);
             return res.send({ success: true });
         })
 
         // to delete an order
         app.delete('/orders/:id', async (req, res) => {
             const order = req.params.id;
-            const filter = { _id: ObjectId(id) };
+            const filter = { _id: ObjectId(order) };
             const result = await ordersCollection.deleteOne(filter);
             res.send(result);
         })
